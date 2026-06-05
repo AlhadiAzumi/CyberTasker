@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber-Tasker Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Crect x='6' y='6' width='52' height='52' rx='10' fill='none' stroke='%2300f2fe' stroke-width='2' opacity='0.4'/%3E%3Crect x='18' y='20' width='28' height='4' rx='2' fill='%2300f2fe'/%3E%3Crect x='18' y='30' width='20' height='4' rx='2' fill='%234facfe' opacity='0.8'/%3E%3Crect x='18' y='40' width='24' height='4' rx='2' fill='%234facfe' opacity='0.5'/%3E%3Ccircle cx='48' cy='44' r='10' fill='%230f172a'/%3E%3Ccircle cx='48' cy='44' r='9' fill='%2300f2fe'/%3E%3Ctext x='48' y='49' text-anchor='middle' font-size='13' font-weight='700' font-family='Arial' fill='%230f172a'%3E%E2%9C%93%3C/text%3E%3C/svg%3E">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+        :root {
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --input-bg: #0f172a;
+            --color-danger: #ef4444;
+            --color-safe: #22c55e;
+        }
+        * { font-family: 'Poppins', sans-serif !important; box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { overflow-y: auto; min-height: 100vh; padding: 20px; background: var(--bg); transition: background 0.3s, color 0.3s; }
+        body::before, body::after { display: none; }
+
+        .dashboard-wrapper { width: 100%; max-width: 900px; margin: 0 auto; }
+
+        /* ── Header ── */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--card); padding: 16px 20px; border-radius: 12px;
+            margin-bottom: 20px; border: 1px solid var(--border); gap: 12px; flex-wrap: wrap;
+        }
+        .user-welcome h1 { font-size: 1.3rem; color: var(--text); font-weight: 700; }
+        .user-welcome p  { color: var(--text-muted); font-size: 0.85rem; font-weight: 300; margin-top: 2px; }
+        .user-welcome span { color: var(--primary); font-weight: 700; }
+        .header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+        .logout-btn {
+            padding: 9px 16px; background: var(--color-danger);
+            color: #fff; font-size: 0.85rem; border-radius: 8px;
+            border: none; cursor: pointer; font-weight: 500; white-space: nowrap;
+        }
+        .logout-btn:hover { background: #dc2626; }
+
+        /* ── Tombol Notifikasi ── */
+        .notif-btn {
+            padding: 9px 16px;
+            background: linear-gradient(45deg, #7c3aed, #a855f7);
+            color: #fff; font-size: 0.85rem; border-radius: 8px;
+            border: none; cursor: pointer; font-weight: 500; white-space: nowrap;
+            transition: filter 0.2s;
+        }
+        .notif-btn:hover { filter: brightness(1.15); }
+        .notif-btn.granted {
+            background: rgba(34,197,94,0.15);
+            border: 1px solid rgba(34,197,94,0.4);
+            color: #22c55e;
+        }
+        .notif-btn.granted:hover { filter: brightness(1.1); }
+        .notif-btn.denied {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #ef4444;
+            cursor: not-allowed;
+        }
+        .notif-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ── Stats ── */
+        .stats-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .stats-card { background: var(--card); border: 1px solid var(--border); padding: 14px; border-radius: 12px; text-align: center; }
+        .stats-count { font-size: 1.8rem; font-weight: 700; color: var(--primary); display: block; }
+        .stats-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; font-weight: 300; }
+        .stats-card.status-pending   .stats-count { color: var(--color-danger); }
+        .stats-card.status-completed .stats-count { color: var(--color-safe);   }
+
+        /* ── Form ── */
+        .form-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .form-card h3 { font-size: 1rem; color: var(--text); margin-bottom: 14px; font-weight: 500; }
+        .input-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+
+        input[type="text"], input[type="date"], select {
+            background: var(--input-bg); border: 1px solid #475569;
+            padding: 11px 14px; border-radius: 8px;
+            color: var(--text); font-size: 0.9rem; width: 100%;
+            transition: border-color 0.2s;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(0,242,254,0.15); }
+        input::placeholder { font-weight: 300; color: #64748b; }
+        select option { background: #0f172a; color: #fff; }
+
+        .submit-btn {
+            padding: 11px 22px;
+            background: linear-gradient(45deg, var(--secondary), var(--primary));
+            color: #fff; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; font-size: 0.9rem;
+        }
+        .submit-btn:hover { filter: brightness(1.1); }
+
+        /* ── Toolbar & Perbaikan Responsif Ekspor ── */
+        .toolbar {
+            display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+        }
+        .search-wrapper {
+            flex: 1; min-width: 200px; position: relative;
+        }
+        .search-wrapper .search-icon {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            color: #64748b; font-size: 0.9rem; pointer-events: none;
+        }
+        #searchInput {
+            padding-left: 36px !important;
+            background: var(--card); border: 1px solid var(--border);
+        }
+        #searchInput:focus { border-color: var(--primary); }
+
+        .sort-wrapper {
+            flex: 1; min-width: 140px;
+        }
+        .sort-wrapper select {
+            background: var(--card); border: 1px solid var(--border);
+            padding: 11px 14px; border-radius: 8px; color: var(--text);
+            font-size: 0.88rem; cursor: pointer; width: 100%;
+        }
+
+        .export-group { display: flex; gap: 6px; flex-shrink: 0; }
+        .btn-export {
+            background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1;
+            padding: 10px 14px; font-size: 0.82rem; font-weight: 500;
+            border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+            transition: background 0.2s; flex: 1; justify-content: center;
+        }
+        .btn-export:hover { background: #f1f5f9; }
+
+        /* ── List ── */
+        .list-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
+        .list-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;
+            gap: 10px; flex-wrap: wrap;
+        }
+        .list-header h3 { font-size: 1rem; color: var(--text); font-weight: 500; }
+        .filter-tabs { display: flex; gap: 6px; background: var(--input-bg); padding: 4px; border-radius: 8px; border: 1px solid var(--border); }
+        .filter-btn { background: transparent; border: none; color: #64748b; padding: 5px 11px; font-size: 0.78rem; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .filter-btn:hover { color: var(--text); }
+        .filter-btn.active { background: var(--card); color: var(--primary); box-shadow: 0 0 10px rgba(0,242,254,0.2); border: 1px solid rgba(0,242,254,0.3); }
+
+        /* ── Task Box (Sengaja default vertikal untuk mobile agar tidak sempit) ── */
+        .task-container { display: flex; flex-direction: column; gap: 10px; }
+        .task-box {
+            background: var(--input-bg); border: 1px solid var(--border);
+            border-radius: 10px; padding: 16px;
+            display: flex; flex-direction: column; gap: 14px;
+            transition: border-color 0.2s;
+            animation: fadeIn 0.22s ease;
+        }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(5px); } to { opacity:1; transform:none; } }
+        .task-box:hover { border-color: #475569; }
+        .task-info { width: 100%; min-width: 0; }
+        .task-name { font-size: 1.05rem; font-weight: 600; color: var(--text); margin-bottom: 4px; word-break: break-word; }
+        .task-detail { font-size: 0.85rem; color: var(--text-muted); font-weight: 300; margin-bottom: 8px; }
+        .task-date { font-size: 0.77rem; font-weight: 500; color: var(--text-muted); background: rgba(148,163,184,0.1); padding: 4px 10px; border-radius: 6px; display: inline-block; }
+        .task-date.overdue { color: #ffa3a3; background: rgba(239,68,110,0.2); border: 1px solid rgba(239,68,68,0.4); }
+        .task-date.urgent  { color: #ff8a8a; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); }
+        .task-date.warning { color: #fef08a; background: rgba(234,179,8,0.15);  border: 1px solid rgba(234,179,8,0.3); }
+        .task-date.safe    { color: #bbf7d0; background: rgba(34,197,94,0.15);  border: 1px solid rgba(34,197,94,0.3); }
+
+        .task-box.is-done { background: rgba(30,41,59,0.4); border-color: #1e293b; }
+        .task-box.is-done .task-name   { text-decoration: line-through; color: #64748b; }
+        .task-box.is-done .task-detail { color: #475569; }
+        .task-box.is-done .task-date   { color: #475569; background: rgba(255,255,255,0.05); border: none; text-decoration: line-through; }
+
+        .task-category-tag { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 2px 9px; border-radius: 20px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .tag-pribadi { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+        .tag-koding  { background: rgba(0,242,254,0.15);  color: var(--primary); border: 1px solid rgba(0,242,254,0.3); }
+        .tag-kuliah  { background: rgba(168,85,247,0.15); color: #a855f7; border: 1px solid rgba(168,85,247,0.3); }
+
+        .highlight { background: rgba(0,242,254,0.25); border-radius: 3px; padding: 0 2px; }
+
+        /* Kelompok Tombol Aksi */
+        .btn-group { display: flex; gap: 8px; width: 100%; justify-content: flex-start; }
+        .action-click { flex: 1; text-align: center; padding: 8px 10px; font-size: 0.8rem; border-radius: 6px; font-weight: 500; border: none; cursor: pointer; white-space: nowrap; transition: filter 0.15s; }
+        .action-click:hover { filter: brightness(1.15); }
+        .done-click   { background: #10b981; color: #fff; }
+        .cancel-click { background: #f97316; color: #fff; }
+        .edit-click   { background: #3b82f6; color: #fff; }
+        .delete-click { background: transparent; border: 1px solid var(--color-danger); color: var(--color-danger); }
+        .delete-click:hover { background: var(--color-danger); color: #fff; filter: none; }
+
+        .empty-text { color: #64748b; font-style: italic; text-align: center; padding: 24px 0; font-weight: 300; }
+        .result-count { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; }
+
+        /* ── Modal ── */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.8); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: var(--card); border: 1px solid var(--border); padding: 28px; border-radius: 16px; width: 92%; max-width: 420px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: scale(0.85); transition: transform 0.25s; }
+        .modal-overlay.show .modal-box { transform: scale(1); }
+        .modal-icon  { font-size: 2.2rem; margin-bottom: 8px; }
+        .modal-title { color: var(--text); font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+        .modal-message { color: var(--text-muted); font-size: 0.88rem; font-weight: 300; line-height: 1.5; margin-bottom: 20px; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: center; }
+        .modal-btn { padding: 10px 18px; font-size: 0.88rem; font-weight: 500; border-radius: 8px; border: none; cursor: pointer; flex: 1; transition: background 0.2s; }
+        .btn-cancel  { background: #334155; color: #f8fafc; } .btn-cancel:hover  { background: #475569; }
+        .btn-confirm { background: var(--color-danger); color: #fff; } .btn-confirm:hover { background: #dc2626; }
+
+        #editModal .modal-box { text-align: left; max-width: 480px; }
+        #editModal .modal-title { text-align: center; }
+        .edit-input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+        .edit-input-group label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 2px; display: block; }
+        .edit-input-group input, .edit-input-group select { padding: 10px 13px; font-size: 0.88rem; }
+        .btn-save-edit { background: linear-gradient(45deg, var(--secondary), var(--primary)); color: #fff; }
+        .btn-save-edit:hover { filter: brightness(1.1); }
+
+        /* ── Toast ── */
+        .toast-container { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--primary); box-shadow: 0 0 20px rgba(0,242,254,0.3); padding: 12px 24px; border-radius: 12px; display: flex; align-items: center; gap: 10px; z-index: 10000; transition: top 0.45s cubic-bezier(0.68,-0.55,0.265,1.55); white-space: nowrap; }
+        .toast-container.show { top: 24px; }
+        .toast-icon    { font-size: 1.1rem; }
+        .toast-message { color: #fff; font-size: 0.9rem; font-weight: 500; }
+
+        /* ── Banner izin notifikasi ── */
+        .notif-banner {
+            display: none; align-items: center; gap: 12px; justify-content: space-between;
+            background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.35);
+            border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .notif-banner.visible { display: flex; }
+        .notif-banner p { color: var(--text-muted); font-size: 0.85rem; font-weight: 300; flex: 1; }
+        .notif-banner p strong { color: #c084fc; font-weight: 500; }
+        .banner-btn {
+            padding: 7px 14px; background: linear-gradient(45deg, #7c3aed, #a855f7);
+            color: #fff; border: none; border-radius: 7px; font-size: 0.82rem;
+            font-weight: 500; cursor: pointer; white-space: nowrap;
+        }
+        .banner-dismiss {
+            background: transparent; border: none; color: #64748b;
+            font-size: 1.1rem; cursor: pointer; padding: 4px; line-height: 1;
+        }
+        .banner-dismiss:hover { color: var(--text); }
+
+        /* ── Print ── */
+        @media print {
+            body { background: #fff !important; color: #000 !important; padding: 0; }
+            header .header-actions, .form-card, .toolbar, .btn-group,
+            #loginToast, .modal-overlay, .notif-banner { display: none !important; }
+            header, .stats-card, .list-card, .task-box { background: #fff !important; border: 1px solid #cbd5e1 !important; color: #000 !important; box-shadow: none !important; }
+            .user-welcome h1, .stats-count, .task-name, .list-header h3 { color: #000 !important; }
+            .user-welcome p, .stats-label, .task-detail, .task-date { color: #334155 !important; }
+            .task-box { page-break-inside: avoid; }
+        }
+
+        /* ════════════════════════════════════════
+           RESPONSIVE BREAKPOINTS (KUNCI UTAMA)
+           ════════════════════════════════════════ */
+        
+        /* Untuk Lebar Tablet & Desktop */
+        @media (min-width: 640px) {
+            .input-row { flex-direction: row; flex-wrap: wrap; }
+            .input-row input#taskTitle     { flex: 2 1 160px; }
+            .input-row input#taskDesc      { flex: 2 1 160px; }
+            .input-row input#taskDeadline  { flex: 1 1 130px; }
+            .input-row select#taskCategory { flex: 1 1 130px; }
+            
+            /* Di desktop, susun info tugas & tombol aksi berjejer horizontal (kiri-kanan) */
+            .task-box { flex-direction: row; justify-content: space-between; align-items: center; }
+            .btn-group { width: auto; justify-content: flex-end; }
+            .action-click { flex: none; padding: 7px 13px; }
+            
+            /* Mengembalikan toolbar ke satu baris lurus utuh */
+            .toolbar { flex-wrap: nowrap; }
+            .sort-wrapper { flex: none; width: 160px; }
+        }
+
+        /* Khusus Layar HP / Mobile */
+        @media (max-width: 520px) {
+            body { padding: 12px; }
+            header { padding: 12px; gap: 12px; }
+            .user-welcome h1 { font-size: 1.15rem; }
+            .header-actions { width: 100%; display: flex; }
+            .header-actions button { flex: 1; text-align: center; font-size: 0.8rem; padding: 8px 10px; }
+            
+            /* Mengecilkan ukuran komponen statistik agar muat 3 kolom di layar HP tanpa bertabrakan */
+            .stats-container { gap: 8px; }
+            .stats-card { padding: 10px 6px; }
+            .stats-count { font-size: 1.35rem; }
+            .stats-label { font-size: 0.7rem; letter-spacing: -0.3px; }
+
+            /* Mengatur susunan Toolbar menjadi tumpuk vertikal penuh */
+            .toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
+            .search-wrapper, .sort-wrapper, .export-group { width: 100%; }
+            
+            /* Merapikan susunan tab filter kategori (Semua, Aktif, Selesai) */
+            .list-header { flex-direction: column; align-items: stretch; gap: 10px; }
+            .filter-tabs { display: flex; width: 100%; }
+            .filter-btn { flex: 1; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Toast -->
+<div id="loginToast" class="toast-container">
+    <div class="toast-icon">🚀</div>
+    <div class="toast-message" id="toastMessage">Selamat datang!</div>
+</div>
+
+<!-- Modal Hapus -->
+<div id="deleteModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-icon">⚠️</div>
+        <h3 class="modal-title">Hapus Tugas</h3>
+        <p class="modal-message">Yakin ingin menghapus tugas ini? Tindakan ini tidak bisa dibatalkan.</p>
+        <div class="modal-buttons">
+            <button id="deleteCancelBtn"  class="modal-btn btn-cancel">Batal</button>
+            <button id="deleteConfirmBtn" class="modal-btn btn-confirm">Ya, Hapus</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit -->
+<div id="editModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-icon">✏️</div>
+        <h3 class="modal-title">Edit Tugas</h3>
+        <div class="edit-input-group">
+            <div><label>Judul Tugas</label><input type="text" id="editTitle" placeholder="Judul tugas..."></div>
+            <div><label>Deskripsi</label><input type="text" id="editDesc" placeholder="Deskripsi singkat..."></div>
+            <div><label>Deadline</label><input type="date" id="editDeadline"></div>
+            <div>
+                <label>Kategori</label>
+                <select id="editCategory">
+                    <option value="pribadi">🏠 Pribadi</option>
+                    <option value="koding">💻 Koding / Proyek</option>
+                    <option value="kuliah">📚 Teori / Kuliah</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button id="editCancelBtn" class="modal-btn btn-cancel">Batal</button>
+            <button id="editSaveBtn"   class="modal-btn btn-save-edit">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-wrapper">
+
+    <header>
+        <div class="user-welcome">
+            <h1>Dashboard Tugas</h1>
+            <p>Selamat datang kembali, <span id="userDisplay">User</span></p>
+        </div>
+        <div class="header-actions">
+            <button id="notifBtn" class="notif-btn" onclick="requestNotifPermission()">🔔 Aktifkan Notifikasi</button>
+            <button class="logout-btn" onclick="logout()">Keluar Akun</button>
+        </div>
+    </header>
+
+    <!-- Banner pengingat izin notifikasi -->
+    <div id="notifBanner" class="notif-banner">
+        <p>🔔 <strong>Aktifkan notifikasi deadline</strong> agar kamu diingatkan saat tugas hampir jatuh tempo.</p>
+        <button class="banner-btn" onclick="requestNotifPermission()">Aktifkan Sekarang</button>
+        <button class="banner-dismiss" onclick="dismissBanner()" title="Tutup">✕</button>
+    </div>
+
+    <div class="stats-container">
+        <div class="stats-card">
+            <span class="stats-count" id="totalTasksCount">0</span>
+            <span class="stats-label">Total Tugas</span>
+        </div>
+        <div class="stats-card status-pending">
+            <span class="stats-count" id="pendingTasksCount">0</span>
+            <span class="stats-label">Belum Selesai</span>
+        </div>
+        <div class="stats-card status-completed">
+            <span class="stats-count" id="completedTasksCount">0</span>
+            <span class="stats-label">Selesai</span>
+        </div>
+    </div>
+
+    <div class="form-card">
+        <h3>Tambah Tugas Baru</h3>
+        <div class="input-row">
+            <input type="text"  id="taskTitle"    placeholder="Judul tugas...">
+            <input type="text"  id="taskDesc"     placeholder="Deskripsi singkat...">
+            <input type="date"  id="taskDeadline" title="Pilih Deadline">
+            <select id="taskCategory">
+                <option value="pribadi">🏠 Pribadi</option>
+                <option value="koding">💻 Koding / Proyek</option>
+                <option value="kuliah">📚 Teori / Kuliah</option>
+            </select>
+        </div>
+        <button class="submit-btn" onclick="addTask()">Simpan Tugas</button>
+    </div>
+
+    <div class="toolbar">
+        <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Cari tugas..." oninput="renderTasks()">
+        </div>
+        <div class="sort-wrapper">
+            <select id="sortSelect" onchange="renderTasks()">
+                <option value="newest">🕐 Terbaru</option>
+                <option value="oldest">🕐 Terlama</option>
+                <option value="deadline_asc">📅 Deadline Terdekat</option>
+                <option value="deadline_desc">📅 Deadline Terjauh</option>
+                <option value="az">🔤 A → Z</option>
+                <option value="za">🔤 Z → A</option>
+            </select>
+        </div>
+        <div class="export-group">
+            <button class="btn-export" onclick="exportCSV()">📊 CSV</button>
+            <button class="btn-export" onclick="printPDF()">📄 PDF</button>
+        </div>
+    </div>
+
+    <div class="list-card">
+        <div class="list-header">
+            <h3>Daftar Tugas Anda</h3>
+            <div class="filter-tabs">
+                <button class="filter-btn active" id="filterAll"    onclick="changeFilter('all')">Semua</button>
+                <button class="filter-btn"        id="filterActive" onclick="changeFilter('active')">Aktif</button>
+                <button class="filter-btn"        id="filterDone"   onclick="changeFilter('done')">Selesai</button>
+            </div>
+        </div>
+        <div id="resultCount" class="result-count" style="display:none"></div>
+        <div class="task-container" id="taskListContainer"></div>
+    </div>
+
+</div>
+
+<script>
+    let currentUser   = "";
+    let currentFilter = "all";
+    let nickname      = "";
+    let notifIntervalId = null;
+
+    window.onload = function() {
+        currentUser = localStorage.getItem('loggedInUser');
+        if (!currentUser) { window.location.href = 'index.html'; return; }
+
+        const emailName = currentUser.split('@')[0];
+        nickname = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+        document.getElementById('userDisplay').textContent = nickname;
+
+        const t   = new Date();
+        const min = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+        document.getElementById('taskDeadline').min = min;
+        document.getElementById('editDeadline').min = min;
+
+        renderTasks();
+        showToast('🚀', `Selamat datang kembali, ${nickname}!`);
+
+        // Inisialisasi sistem notifikasi
+        initNotifications();
+    };
+
+    /* ════════════════════════════════════════
+       NOTIFICATION API
+    ════════════════════════════════════════ */
+
+    function initNotifications() {
+        const btn    = document.getElementById('notifBtn');
+        const banner = document.getElementById('notifBanner');
+
+        // Browser tidak mendukung Notification API
+        if (!('Notification' in window)) {
+            btn.textContent = '⛔ Notif. tidak didukung';
+            btn.disabled    = true;
+            return;
+        }
+
+        updateNotifButton(Notification.permission);
+
+        if (Notification.permission === 'granted') {
+            // Sudah ada izin — langsung jalankan cek & jadwal
+            scheduleDeadlineChecks();
+            checkDeadlines();
+        } else if (Notification.permission === 'default') {
+            // Belum pernah diminta — tampilkan banner jika belum di-dismiss
+            const dismissed = localStorage.getItem('notifBannerDismissed');
+            if (!dismissed) banner.classList.add('visible');
+        }
+    }
+
+    function updateNotifButton(permission) {
+        const btn = document.getElementById('notifBtn');
+        if (permission === 'granted') {
+            btn.textContent = '🔔 Notifikasi Aktif';
+            btn.className   = 'notif-btn granted';
+            btn.onclick     = null;
+        } else if (permission === 'denied') {
+            btn.textContent = '🔕 Notifikasi Diblokir';
+            btn.className   = 'notif-btn denied';
+            btn.onclick     = null;
+        } else {
+            btn.textContent = '🔔 Aktifkan Notifikasi';
+            btn.className   = 'notif-btn';
+            btn.onclick     = requestNotifPermission;
+        }
+    }
+
+    async function requestNotifPermission() {
+        if (!('Notification' in window)) {
+            showToast('⛔', 'Browser tidak mendukung notifikasi.', 2500);
+            return;
+        }
+
+        const permission = await Notification.requestPermission();
+        updateNotifButton(permission);
+        dismissBanner(); // sembunyikan banner setelah user memilih
+
+        if (permission === 'granted') {
+            showToast('🔔', 'Notifikasi deadline diaktifkan!', 2500);
+            scheduleDeadlineChecks();
+            checkDeadlines(); // cek langsung saat pertama kali izin diberikan
+        } else if (permission === 'denied') {
+            showToast('🔕', 'Izin notifikasi ditolak. Aktifkan di pengaturan browser.', 3000);
+        }
+    }
+
+    function dismissBanner() {
+        const banner = document.getElementById('notifBanner');
+        banner.classList.remove('visible');
+        localStorage.setItem('notifBannerDismissed', '1');
+    }
+
+    function scheduleDeadlineChecks() {
+        if (notifIntervalId) clearInterval(notifIntervalId);
+        // Cek setiap 30 menit
+        notifIntervalId = setInterval(checkDeadlines, 30 * 60 * 1000);
+    }
+
+    function checkDeadlines() {
+        if (Notification.permission !== 'granted') return;
+
+        const tasks  = getTasks();
+        const today  = new Date(); today.setHours(0, 0, 0, 0);
+        const alerts = [];
+
+        tasks.filter(t => !t.completed && t.deadline).forEach(t => {
+            const dl   = new Date(t.deadline); dl.setHours(0, 0, 0, 0);
+            const days = Math.ceil((dl - today) / 86_400_000);
+
+            if      (days < 0)        alerts.push({ t, label: 'Deadline terlewat!',    icon: '🚨', urgency: 4 });
+            else if (days === 0)      alerts.push({ t, label: 'Deadline HARI INI!',    icon: '🔥', urgency: 3 });
+            else if (days === 1)      alerts.push({ t, label: 'Deadline besok!',        icon: '⚠️', urgency: 2 });
+            else if (days <= 3)       alerts.push({ t, label: `${days} hari lagi`,     icon: '⏰', urgency: 1 });
+        });
+
+        if (alerts.length === 0) return;
+
+        // Urutkan dari paling mendesak
+        alerts.sort((a, b) => b.urgency - a.urgency);
+
+        if (alerts.length > 3) {
+            // Satu notifikasi ringkasan agar tidak spam
+            const lines = alerts.map(a => `${a.icon} ${a.t.title} — ${a.label}`).join('\n');
+            sendNotification(
+                `📋 ${alerts.length} tugas mendekati deadline`,
+                lines
+            );
+        } else {
+            // Notifikasi individual untuk ≤3 tugas
+            alerts.forEach(({ t, label, icon }) => {
+                sendNotification(
+                    `${icon} ${label} — ${t.title}`,
+                    t.desc ? t.desc : 'Segera selesaikan tugasmu!'
+                );
+            });
+        }
+    }
+
+    function sendNotification(title, body) {
+        try {
+            const ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Crect x='6' y='6' width='52' height='52' rx='10' fill='none' stroke='%2300f2fe' stroke-width='2' opacity='0.4'/%3E%3Crect x='18' y='20' width='28' height='4' rx='2' fill='%2300f2fe'/%3E%3Crect x='18' y='30' width='20' height='4' rx='2' fill='%234facfe' opacity='0.8'/%3E%3Crect x='18' y='40' width='24' height='4' rx='2' fill='%234facfe' opacity='0.5'/%3E%3Ccircle cx='48' cy='44' r='10' fill='%230f172a'/%3E%3Ccircle cx='48' cy='44' r='9' fill='%2300f2fe'/%3E%3Ctext x='48' y='49' text-anchor='middle' font-size='13' font-weight='700' font-family='Arial' fill='%230f172a'%3E%E2%9C%93%3C/text%3E%3C/svg%3E";
+        const n = new Notification(title, {
+                body,
+                icon : ICON,
+                badge: ICON,
+                tag  : 'cyber-tasker-deadline',
+                renotify: true,
+            });
+            n.onclick = () => { window.focus(); n.close(); };
+        } catch (e) {
+            console.warn('Gagal mengirim notifikasi:', e);
+        }
+    }
+
+    /* ════════════════════════════════════════
+       TOAST
+    ════════════════════════════════════════ */
+    function showToast(icon, msg, duration = 3000) {
+        const toast = document.getElementById('loginToast');
+        toast.querySelector('.toast-icon').textContent    = icon;
+        toast.querySelector('.toast-message').textContent = msg;
+        toast.style.borderColor = '';
+        toast.style.boxShadow   = '';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), duration);
+    }
+
+    /* ════════════════════════════════════════
+       STORAGE
+    ════════════════════════════════════════ */
+    function getKey()     { return `tasks_${currentUser}`; }
+    function getTasks()   { return JSON.parse(localStorage.getItem(getKey())) || []; }
+    function saveTasks(t) { localStorage.setItem(getKey(), JSON.stringify(t)); }
+
+    /* ════════════════════════════════════════
+       FILTER & SORT
+    ════════════════════════════════════════ */
+    function changeFilter(f) {
+        currentFilter = f;
+        ['All','Active','Done'].forEach(x =>
+            document.getElementById('filter'+x).classList.toggle('active', f === x.toLowerCase())
+        );
+        renderTasks();
+    }
+
+    function sortTasks(tasks) {
+        const mode = document.getElementById('sortSelect').value;
+        const copy = [...tasks];
+        const far  = new Date('2099-12-31');
+        copy.sort((a, b) => {
+            switch (mode) {
+                case 'newest':        return 0;
+                case 'oldest':        return 0;
+                case 'deadline_asc':  return (a.deadline ? new Date(a.deadline) : far) - (b.deadline ? new Date(b.deadline) : far);
+                case 'deadline_desc': return (b.deadline ? new Date(b.deadline) : far) - (a.deadline ? new Date(a.deadline) : far);
+                case 'az':            return a.title.localeCompare(b.title);
+                case 'za':            return b.title.localeCompare(a.title);
+            }
+        });
+        if (mode === 'oldest') copy.reverse();
+        return copy;
+    }
+
+    /* ════════════════════════════════════════
+       RENDER
+    ════════════════════════════════════════ */
+    function highlight(text, query) {
+        if (!query) return escapeHTML(text);
+        const escaped = escapeHTML(text);
+        const re = new RegExp(`(${escapeHTML(query).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+        return escaped.replace(re, '<span class="highlight">$1</span>');
+    }
+
+    function renderTasks() {
+        const container   = document.getElementById('taskListContainer');
+        const resultCount = document.getElementById('resultCount');
+        container.innerHTML = "";
+
+        const tasks     = getTasks();
+        const query     = document.getElementById('searchInput').value.trim().toLowerCase();
+        const totalAll  = tasks.length;
+        const completed = tasks.filter(t => t.completed).length;
+        const pending   = totalAll - completed;
+
+        document.getElementById('totalTasksCount').textContent     = totalAll;
+        document.getElementById('completedTasksCount').textContent = completed;
+        document.getElementById('pendingTasksCount').textContent   = pending;
+
+        let filtered = tasks;
+        if (currentFilter === 'active') filtered = tasks.filter(t => !t.completed);
+        if (currentFilter === 'done')   filtered = tasks.filter(t =>  t.completed);
+
+        if (query) {
+            filtered = filtered.filter(t =>
+                t.title.toLowerCase().includes(query) ||
+                (t.desc && t.desc.toLowerCase().includes(query))
+            );
+        }
+
+        const sorted = sortTasks(filtered);
+
+        if (query) {
+            resultCount.style.display = 'block';
+            resultCount.textContent   = `Ditemukan ${sorted.length} tugas untuk "${query}"`;
+        } else {
+            resultCount.style.display = 'none';
+        }
+
+        if (sorted.length === 0) {
+            const msgs = {
+                all:    query ? `Tidak ada tugas yang cocok dengan "${query}".` : 'Belum ada tugas. Silakan tambah tugas di atas!',
+                active: query ? `Tidak ada tugas aktif yang cocok.` : 'Mantap! Tidak ada tugas tertunda. 🎉',
+                done:   query ? `Tidak ada tugas selesai yang cocok.` : 'Belum ada tugas yang diselesaikan.'
+            };
+            container.innerHTML = `<p class="empty-text">${msgs[currentFilter]}</p>`;
+            return;
+        }
+
+        const today = new Date(); today.setHours(0,0,0,0);
+
+        sorted.forEach(task => {
+            const idx = tasks.findIndex(t =>
+                t.title === task.title && t.deadline === task.deadline && t.desc === task.desc
+            );
+
+            let deadlineText = "Tanpa Deadline", colorClass = "";
+            if (task.deadline && !task.completed) {
+                const dl   = new Date(task.deadline); dl.setHours(0,0,0,0);
+                const days = Math.ceil((dl - today) / 86400000);
+                const fmt  = dl.toLocaleDateString('id-ID');
+                if      (days < 0)  { deadlineText = `Deadline: ${fmt} (Terlewat!)`;           colorClass = "overdue"; }
+                else if (days <= 3) { deadlineText = `Deadline: ${fmt} (${days} hari lagi!)`;  colorClass = "urgent";  }
+                else if (days <= 7) { deadlineText = `Deadline: ${fmt} (${days} hari lagi)`;   colorClass = "warning"; }
+                else                { deadlineText = `Deadline: ${fmt}`;                        colorClass = "safe";    }
+            } else if (task.deadline && task.completed) {
+                deadlineText = `Deadline: ${new Date(task.deadline).toLocaleDateString('id-ID')}`;
+            }
+
+            const catLabel = { koding:'💻 Koding', kuliah:'📚 Kuliah', pribadi:'🏠 Pribadi' }[task.category || 'pribadi'];
+
+            const box = document.createElement('div');
+            box.className = `task-box ${task.completed ? 'is-done' : ''}`;
+            box.innerHTML = `
+                <div class="task-info">
+                    <span class="task-category-tag tag-${task.category||'pribadi'}">${catLabel}</span>
+                    <div class="task-name">${highlight(task.title, query)}</div>
+                    <div class="task-detail">${highlight(task.desc || 'Tidak ada deskripsi.', query)}</div>
+                    <div class="task-date ${colorClass}">${deadlineText}</div>
+                </div>
+                <div class="btn-group">
+                    ${!task.completed
+                        ? `<button class="action-click done-click"   onclick="completeTask(${idx})">Selesai</button>`
+                        : `<button class="action-click cancel-click" onclick="uncompleteTask(${idx})">Batal</button>`
+                    }
+                    <button class="action-click edit-click"   onclick="openEditModal(${idx})">Edit</button>
+                    <button class="action-click delete-click" onclick="openDeleteModal(${idx})">Hapus</button>
+                </div>
+            `;
+            container.appendChild(box);
+        });
+    }
+
+    /* ════════════════════════════════════════
+       CRUD
+    ════════════════════════════════════════ */
+    function addTask() {
+        const title    = document.getElementById('taskTitle').value.trim();
+        const desc     = document.getElementById('taskDesc').value.trim();
+        const deadline = document.getElementById('taskDeadline').value;
+        const category = document.getElementById('taskCategory').value;
+
+        if (!title) { showToast('⚠️', 'Judul tugas tidak boleh kosong!', 2500); return; }
+
+        const tasks = getTasks();
+        tasks.push({ title, desc, deadline, category, completed: false });
+        saveTasks(tasks);
+
+        document.getElementById('taskTitle').value    = "";
+        document.getElementById('taskDesc').value     = "";
+        document.getElementById('taskDeadline').value = "";
+        document.getElementById('taskCategory').value = "pribadi";
+
+        showToast('✅', 'Tugas berhasil ditambahkan!', 2000);
+        renderTasks();
+    }
+
+    function completeTask(i)   { const t = getTasks(); t[i].completed = true;  saveTasks(t); renderTasks(); }
+    function uncompleteTask(i) { const t = getTasks(); t[i].completed = false; saveTasks(t); renderTasks(); }
+
+    /* ── Modal Hapus ── */
+    function openDeleteModal(index) {
+        const modal = document.getElementById('deleteModal');
+        modal.classList.add('show');
+        document.getElementById('deleteConfirmBtn').onclick = function() {
+            const t = getTasks(); t.splice(index, 1); saveTasks(t);
+            modal.classList.remove('show');
+            showToast('🗑️', 'Tugas berhasil dihapus.', 2000);
+            renderTasks();
+        };
+        document.getElementById('deleteCancelBtn').onclick = () => modal.classList.remove('show');
+        modal.onclick = e => { if (e.target === modal) modal.classList.remove('show'); };
+    }
+
+    /* ── Modal Edit ── */
+    function openEditModal(index) {
+        const tasks = getTasks();
+        const task  = tasks[index];
+        const modal = document.getElementById('editModal');
+
+        document.getElementById('editTitle').value    = task.title;
+        document.getElementById('editDesc').value     = task.desc || '';
+        document.getElementById('editDeadline').value = task.deadline || '';
+        document.getElementById('editCategory').value = task.category || 'pribadi';
+
+        modal.classList.add('show');
+
+        document.getElementById('editSaveBtn').onclick = function() {
+            const newTitle = document.getElementById('editTitle').value.trim();
+            if (!newTitle) { showToast('⚠️', 'Judul tidak boleh kosong!', 2500); return; }
+            tasks[index].title    = newTitle;
+            tasks[index].desc     = document.getElementById('editDesc').value.trim();
+            tasks[index].deadline = document.getElementById('editDeadline').value;
+            tasks[index].category = document.getElementById('editCategory').value;
+            saveTasks(tasks);
+            modal.classList.remove('show');
+            showToast('✏️', 'Tugas berhasil diperbarui!', 2000);
+            renderTasks();
+        };
+        document.getElementById('editCancelBtn').onclick = () => modal.classList.remove('show');
+        modal.onclick = e => { if (e.target === modal) modal.classList.remove('show'); };
+    }
+
+    /* ════════════════════════════════════════
+       EXPORT
+    ════════════════════════════════════════ */
+    function exportCSV() {
+        const tasks = getTasks();
+        if (tasks.length === 0) { showToast('⚠️', 'Tidak ada data tugas untuk diexport!', 2500); return; }
+
+        let csv = "Judul,Deskripsi,Deadline,Kategori,Status\n";
+        tasks.forEach(t => {
+            const title    = `"${(t.title||'').replace(/"/g,'""')}"`;
+            const desc     = `"${(t.desc||'').replace(/"/g,'""')}"`;
+            const deadline = t.deadline || '-';
+            const category = t.category || 'pribadi';
+            const status   = t.completed ? 'Selesai' : 'Belum Selesai';
+            csv += `${title},${desc},${deadline},${category},${status}\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href  = URL.createObjectURL(blob);
+        link.setAttribute("download", "cyber_tasker_tasks.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('📊', 'Berhasil mengunduh file CSV!', 2000);
+    }
+
+    function printPDF() {
+        const tasks = getTasks();
+        if (tasks.length === 0) { showToast('⚠️', 'Tidak ada tugas untuk dicetak!', 2500); return; }
+        window.print();
+    }
+
+    /* ════════════════════════════════════════
+       LOGOUT
+    ════════════════════════════════════════ */
+    function logout() {
+        if (notifIntervalId) clearInterval(notifIntervalId);
+        const toast = document.getElementById('loginToast');
+        toast.querySelector('.toast-message').textContent = `Sampai jumpa, ${nickname}! 🔒`;
+        toast.style.borderColor = 'var(--color-danger)';
+        toast.style.boxShadow   = '0 0 20px rgba(239,68,68,0.3)';
+        toast.classList.add('show');
+        setTimeout(() => {
+            localStorage.removeItem('loggedInUser');
+            localStorage.removeItem('role');
+            window.location.href = 'index.html';
+        }, 2000);
+    }
+
+    /* ════════════════════════════════════════
+       UTILS
+    ════════════════════════════════════════ */
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g,
+            t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t]||t)
+        );
+    }
+</script>
+</body>
+</html>

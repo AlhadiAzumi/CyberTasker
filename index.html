@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+<meta name="title" content="Cyber-Tasker — Kelola Tugas dengan Mudah">
+    <meta name="description" content="Aplikasi pencatat tugas modern dengan pengingat notifikasi deadline langsung di browsermu. Tetap produktif dan bebas stres!">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://cybertasker.netlify.app/">
+    <meta property="og:title" content="Cyber-Tasker — Kelola Tugas dengan Mudah">
+    <meta property="og:description" content="Catat tugas koding, kuliah, dan pribadi. Lengkap dengan notifikasi deadline otomatis!">
+    <meta property="og:image" content="https://cybertasker.netlify.app/og-image.png">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://cybertasker.netlify.app/">
+    <meta property="twitter:title" content="Cyber-Tasker — Kelola Tugas dengan Mudah">
+    <meta property="twitter:description" content="Catat tugas koding, kuliah, dan pribadi. Lengkap dengan notifikasi deadline otomatis!">
+    <meta property="twitter:image" content="https://cybertasker.netlify.app/og-image.png">
+    <title>Login — Cyber-Tasker</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Crect x='6' y='6' width='52' height='52' rx='10' fill='none' stroke='%2300f2fe' stroke-width='2' opacity='0.4'/%3E%3Crect x='18' y='20' width='28' height='4' rx='2' fill='%2300f2fe'/%3E%3Crect x='18' y='30' width='20' height='4' rx='2' fill='%234facfe' opacity='0.8'/%3E%3Crect x='18' y='40' width='24' height='4' rx='2' fill='%234facfe' opacity='0.5'/%3E%3Ccircle cx='48' cy='44' r='10' fill='%230f172a'/%3E%3Ccircle cx='48' cy='44' r='9' fill='%2300f2fe'/%3E%3Ctext x='48' y='49' text-anchor='middle' font-size='13' font-weight='700' font-family='Arial' fill='%230f172a'%3E%E2%9C%93%3C/text%3E%3C/svg%3E">
+    <style>
+        :root {
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --bg-dark: #0a0c16;
+            --card-bg: rgba(13, 18, 36, 0.65);
+            --text-light: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            border: 1px solid #00f2fe;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+            padding: 14px 28px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+            transition: top 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            white-space: nowrap;
+        }
+        .toast-container.show { top: 30px; }
+        .toast-icon { font-size: 1.2rem; }
+        .toast-message { color: #fff; font-size: 0.95rem; font-weight: 500; }
+
+        body {
+            background: radial-gradient(circle at center, #1a1f3c 0%, var(--bg-dark) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            color: var(--text-light);
+        }
+
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            filter: blur(100px);
+            opacity: 0.2;
+            z-index: 0;
+        }
+        body::before { top: -50px; left: -50px; }
+        body::after  { bottom: -50px; right: -50px; }
+
+        .login {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 15px rgba(0,242,254,0.1);
+            border: 1px solid rgba(0,242,254,0.2);
+            z-index: 1;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .login:hover {
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 25px rgba(0,242,254,0.2);
+        }
+
+        /* Logo area */
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+        }
+        h2 {
+            font-size: 2rem;
+            letter-spacing: 2px;
+            background: linear-gradient(45deg, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            outline: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        input[type="text"]:focus, input[type="password"]:focus {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(0,242,254,0.3);
+        }
+        input::placeholder { color: #64748b; }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 15px 0 25px 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #a0aec0;
+            user-select: none;
+        }
+        .checkbox-container input { cursor: pointer; accent-color: var(--primary); }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(45deg, var(--secondary), var(--primary));
+            border: none;
+            outline: none;
+            border-radius: 10px;
+            color: #000;
+            font-size: 1rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,242,254,0.3);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,242,254,0.5);
+            filter: brightness(1.1);
+        }
+        button:active { transform: translateY(1px); }
+
+        #message {
+            margin-top: 15px;
+            min-height: 20px;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        p { margin-top: 25px; font-size: 0.9rem; color: #a0aec0; }
+        a { color: var(--primary); text-decoration: none; font-weight: 600; transition: color 0.3s ease; }
+        a:hover { color: #fff; text-shadow: 0 0 8px var(--primary); }
+    </style>
+</head>
+<body>
+
+<div id="loginToast" class="toast-container">
+    <div class="toast-icon">🚀</div>
+    <div class="toast-message" id="toastMessage">Selamat datang!</div>
+</div>
+
+<div class="login">
+    <!-- Brand / Logo -->
+    <div class="brand">
+        <svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+            <rect width="64" height="64" rx="14" fill="#0f172a"/>
+            <rect x="6" y="6" width="52" height="52" rx="10" fill="none" stroke="#00f2fe" stroke-width="2" opacity="0.4"/>
+            <rect x="18" y="20" width="28" height="4" rx="2" fill="#00f2fe"/>
+            <rect x="18" y="30" width="20" height="4" rx="2" fill="#4facfe" opacity="0.8"/>
+            <rect x="18" y="40" width="24" height="4" rx="2" fill="#4facfe" opacity="0.5"/>
+            <circle cx="48" cy="44" r="10" fill="#0f172a"/>
+            <circle cx="48" cy="44" r="9" fill="#00f2fe"/>
+            <text x="48" y="49" text-anchor="middle" font-size="13" font-weight="700" font-family="Arial" fill="#0f172a">✓</text>
+        </svg>
+        <h2>Login</h2>
+    </div>
+
+    <div class="input-group">
+        <input type="text" id="loginUsername" placeholder="Email" required>
+    </div>
+
+    <div class="input-group">
+        <input type="password" id="loginPassword" placeholder="Password" required>
+    </div>
+
+    <label class="checkbox-container">
+        <input type="checkbox" id="showPassword" onclick="togglePassword()">
+        <span>Tampilkan Password</span>
+    </label>
+
+    <button onclick="login()">Sign In</button>
+    <p id="message"></p>
+    <p>Belum punya akun? <a href="register.html">Daftar di sini</a></p>
+</div>
+
+<script>
+    async function hashPassword(password) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function showToast(icon, message, callback, delay = 2500) {
+        const toast    = document.getElementById('loginToast');
+        const toastMsg = document.getElementById('toastMessage');
+        toast.querySelector('.toast-icon').textContent = icon;
+        toastMsg.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+            if (callback) setTimeout(callback, 400);
+        }, delay);
+    }
+
+    function togglePassword() {
+        const p = document.getElementById('loginPassword');
+        p.type = p.type === "password" ? "text" : "password";
+    }
+
+    function getNickname(email) {
+        const name = email.split('@')[0];
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+
+    async function login() {
+        const username   = document.getElementById('loginUsername').value.trim();
+        const password   = document.getElementById('loginPassword').value;
+        const messageDiv = document.getElementById('message');
+        const users      = JSON.parse(localStorage.getItem('users')) || {};
+
+        if (!username || !password) {
+            messageDiv.textContent = "Email atau password tidak boleh kosong.";
+            messageDiv.style.color = "#ff4d4d";
+            return;
+        }
+
+        const hashedPassword = await hashPassword(password);
+
+        if (users[username] && users[username] === hashedPassword) {
+            messageDiv.textContent = "Login berhasil!";
+            messageDiv.style.color = "#00ff88";
+            localStorage.setItem('loggedInUser', username);
+            localStorage.setItem('role', 'user biasa');
+
+            showToast('🚀', `Selamat datang, ${getNickname(username)}!`, () => {
+                window.location.href = 'dashboard.html';
+            });
+        } else {
+            messageDiv.textContent = "Username atau password salah.";
+            messageDiv.style.color = "#ff4d4d";
+        }
+    }
+
+    window.onload = function() {
+        const loggedInUser = localStorage.getItem('loggedInUser');
+        if (loggedInUser) {
+            showToast('👋', `Anda sudah login sebagai ${getNickname(loggedInUser)}.`, () => {
+                window.location.href = 'dashboard.html';
+            });
+        }
+    };
+</script>
+</body>
+</html>
